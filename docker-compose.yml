@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  models-api:
+    build:
+      context: ./models-api
+      dockerfile: ./docker/dev.Dockerfile
+    command: rails server -b 0.0.0.0
+    ports:
+      - 3929:3000
+    working_dir: /app
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DB_NAME=models
+    volumes:
+      - ./models-api:/app
+    depends_on:
+      - db
+    networks:
+      - local-network
+    develop:
+      watch:
+        - action: sync
+          path: ./models-api
+          target: /app
+  comsumer-api:
+    build:
+      context: ./consumer-api
+      dockerfile: ./docker/dev.Dockerfile
+    command: rails server -b 0.0.0.0
+    ports:
+      - 3930:3000
+    working_dir: /app
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_HOST=db
+      - DB_NAME=consumer
+    volumes:
+      - ./consumer-api:/app
+    depends_on:
+      - db
+    networks:
+      - local-network
+    develop:
+      build:
+        action: sync
+        path: ./consumer-api
+        target: /app
+  db:
+    image: postgres:14
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=password
+    networks:
+      - local-network
+networks:
+  local-network:
+    driver: bridge
